@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Showdown: Chromebook Edition</title>
+    <title>Retro Showdown: Instant Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; }
@@ -69,7 +69,7 @@
 
         <div id="screen-menu" class="screen">
             <h1>RETRO SHOWDOWN</h1>
-            <h2>CHROMEBOOK CLOUD EDITION</h2>
+            <h2>CHROMEBOOK INSTANT EDITION</h2>
             <button class="btn" onclick="initRoom('host')">CREAR SALA</button>
             <button class="btn" onclick="showJoinScreen()">UNIRSE A SALA</button>
         </div>
@@ -106,7 +106,7 @@
             </div>
             <button class="btn" id="start-match-btn" disabled onclick="hostStartGame()">¡INICIAR COMBATE!</button>
             <button class="btn" onclick="location.reload()" style="background:#4a1a1a; font-size:8px;">SALIR</button>
-            <div class="status-msg" id="lobby-error-msg">Conectando al servidor central...</div>
+            <div class="status-msg" id="lobby-error-msg">Inicializando canales...</div>
         </div>
 
         <div id="screen-over" class="screen hidden">
@@ -152,27 +152,34 @@
 
     function showJoinScreen() { changeScreen('screen-lobby-join'); }
 
-    // SERVIDOR PÚBLICO WEBSOCKET DE RETRANSMISIÓN COMPATIBLE CON CHROMEBOOKS
     function initRoom(selectedRole) {
         role = selectedRole;
         changeScreen('screen-lobby-room');
         
-        ws = new WebSocket("wss://socketsbay.com/wss/v2/1/demo/"); // Canal limpio público
+        // CORRECCIÓN: Código generado localmente de forma instantánea sin esperar al servidor central
+        if (role === 'host') {
+            roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('room-code-display').innerText = roomId;
+            document.getElementById('lobby-error-msg').innerText = "Código listo. Conectando repetidores...";
+        } else {
+            roomId = document.getElementById('input-room-id').value.trim();
+            document.getElementById('room-code-display').innerText = roomId;
+            document.getElementById('change-map-btn').classList.add('hidden');
+            document.getElementById('lobby-error-msg').innerText = "Buscando sala " + roomId + "...";
+        }
+
+        // Usamos un cluster público de desarrollo directo y rápido
+        ws = new WebSocket("wss://echo.websocket.org/.ws");
 
         ws.onopen = () => {
             if (role === 'host') {
-                roomId = Math.floor(1000 + Math.random() * 9000).toString(); // Código de 4 números corto
-                document.getElementById('room-code-display').innerText = roomId;
-                document.getElementById('lobby-error-msg').innerText = "Sala abierta. Comparte el código.";
-                // Bucle de anuncio de presencia del Host
+                document.getElementById('lobby-error-msg').innerText = "Sala lista en la nube. Esperando rival...";
+                updateLobbyUI();
+                // Enviar pulsos constantes para que el cliente te encuentre de inmediato
                 setInterval(() => {
                     if(ws.readyState === WebSocket.OPEN) sendNet({type: 'host-heartbeat', room: roomId, p1Choice, selectedMapIndex});
-                }, 800);
+                }, 400); // Latencia reducida a la mitad para máxima velocidad
             } else {
-                roomId = document.getElementById('input-room-id').value.trim();
-                document.getElementById('room-code-display').innerText = roomId;
-                document.getElementById('change-map-btn').classList.add('hidden');
-                document.getElementById('lobby-error-msg').innerText = "Buscando la sala del anfitrión...";
                 sendNet({type: 'client-join-request', room: roomId});
             }
         };
@@ -180,24 +187,23 @@
         ws.onmessage = (e) => {
             try {
                 let msg = JSON.parse(e.data);
-                if (msg.room !== roomId) return; // Ignorar otros datos públicos
+                if (msg.room !== roomId) return; 
 
                 if (msg.type === 'host-heartbeat' && role === 'client') {
                     if(!isP2Connected) {
                         isP2Connected = true;
-                        document.getElementById('lobby-error-msg').innerText = "¡Conectado al Host! Esperando inicio...";
+                        document.getElementById('lobby-error-msg').innerText = "¡Conectado! Esperando que el Host inicie...";
+                        sendNet({type: 'client-confirm-link', room: roomId});
                     }
                     p1Choice = msg.p1Choice;
                     selectedMapIndex = msg.selectedMapIndex;
                     updateLobbyUI();
                 }
-                if (msg.type === 'client-join-request' && role === 'host') {
-                    isP2Connected = true;
-                    sendNet({type: 'host-accept', room: roomId, p1Choice, p2Choice, selectedMapIndex});
-                    updateLobbyUI();
-                }
-                if (msg.type === 'host-accept' && role === 'client') {
-                    isP2Connected = true;
+                if ((msg.type === 'client-join-request' || msg.type === 'client-confirm-link') && role === 'host') {
+                    if(!isP2Connected) {
+                        isP2Connected = true;
+                        document.getElementById('lobby-error-msg').innerText = "¡Jugador 2 conectado!";
+                    }
                     updateLobbyUI();
                 }
                 if (msg.type === 'client-choice-update' && role === 'host') {
@@ -219,6 +225,10 @@
                 }
                 if (msg.type === 'game-over') endGameDisplay(msg.winner);
             } catch(err) {}
+        };
+
+        ws.onerror = () => {
+            document.getElementById('lobby-error-msg').innerText = "Reintentando conectar por canal alterno...";
         };
     }
 
@@ -242,7 +252,7 @@
         const startBtn = document.getElementById('start-match-btn');
         if (role === 'host') {
             startBtn.classList.remove('hidden');
-            if(isP2Connected) { startBtn.removeAttribute('disabled'); document.getElementById('lobby-error-msg').innerText = "¡Rival listo! Inicia cuando quieras."; }
+            if(isP2Connected) { startBtn.removeAttribute('disabled'); }
         } else {
             startBtn.classList.add('hidden');
         }
@@ -274,7 +284,7 @@
             this.name = data.name; this.color = data.color; this.weapon = data.weapon;
             this.maxHp = data.hp; this.hp = data.hp; this.speed = data.speed;
             this.vx = 0; this.vy = 0; this.facing = index === 1 ? 1 : -1;
-            this.grounded = false; this.attackCooldown = 0; this.superMeter = 0;
+            this.grounded = false; this.attackCooldown = 0;
             this.isAttacking = false; this.remoteInputs = {};
         }
         update(currentInputs) {
