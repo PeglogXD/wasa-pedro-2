@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Showdown: Instant Edition</title>
+    <title>Retro Showdown: Local & Bot Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; }
@@ -42,12 +42,11 @@
         .player-title { font-size: 10px; margin-bottom: 8px; color: #aaa; }
         .player-slot.connected .player-title { color: #05ff60; }
         .char-preview-text { font-size: 8px; color: #f5b041; line-height: 1.4; margin-top: 5px; }
-        .map-select-area { font-size: 9px; margin-bottom: 15px; }
+        .map-select-area { font-size: 9px; margin-bottom: 10px; }
         #hud { position: absolute; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 15px 20px; z-index: 5; pointer-events: none; }
         .player-hud { width: 40%; }
         .bar-container { width: 100%; height: 14px; background: #222; border: 2px solid #fff; margin-top: 4px; }
         .hp-bar { width: 100%; height: 100%; background: #05ff60; transition: width 0.1s; }
-        .sp-bar { width: 0%; height: 100%; background: #f5b041; transition: width 0.1s; }
         .status-msg { font-size: 9px; color: #ff2a6d; margin-top: 10px; }
     </style>
 </head>
@@ -58,60 +57,81 @@
             <div class="player-hud">
                 <div id="name-p1" style="font-size:9px;">P1</div>
                 <div class="bar-container"><div class="hp-bar" id="hp-p1"></div></div>
-                <div class="bar-container" style="height:6px; margin-top:2px;"><div class="sp-bar" id="sp-p1"></div></div>
             </div>
             <div class="player-hud" style="text-align: right;">
                 <div id="name-p2" style="font-size:9px;">P2</div>
                 <div class="bar-container"><div class="hp-bar" id="hp-p2" style="float: right;"></div></div>
-                <div class="bar-container" style="height:6px; margin-top:2px;"><div class="sp-bar" id="sp-p2" style="float: right;"></div></div>
             </div>
         </div>
 
         <div id="screen-menu" class="screen">
             <h1>RETRO SHOWDOWN</h1>
-            <h2>CHROMEBOOK INSTANT EDITION</h2>
-            <button class="btn" onclick="initRoom('host')">CREAR SALA</button>
-            <button class="btn" onclick="showJoinScreen()">UNIRSE A SALA</button>
+            <h2>CHROMEBOOK LOCAL EDITION</h2>
+            <button class="btn" onclick="openModeMenu('vs-bot')">1 JUGADOR (VS BOT)</button>
+            <button class="btn" onclick="openModeMenu('lan')">MULTIJUGADOR (MISMO WI-FI)</button>
+        </div>
+
+        <div id="screen-lan-menu" class="screen hidden">
+            <h2>MULTIJUGADOR LOCAL</h2>
+            <p style="font-size:8px; margin-bottom:15px; color:#aaa;">Asegúrense de estar conectados a la misma red</p>
+            <button class="btn" onclick="initRoom('host')">CREAR SALA LOCAL</button>
+            <button class="btn" onclick="showJoinScreen()">UNIRSE A SALA LOCAL</button>
+            <button class="btn" onclick="location.reload()" style="background:#333;">VOLVER</button>
         </div>
 
         <div id="screen-lobby-join" class="screen hidden">
-            <h2>UNIRSE A LA BATALLA</h2>
-            <p style="font-size:10px;">Código de 4 dígitos:</p>
+            <h2>BUSCAR ANFITRIÓN</h2>
+            <p style="font-size:10px;">Introduce el código Wi-Fi de 4 dígitos:</p>
             <input type="text" id="input-room-id" class="input-retro" maxlength="4" placeholder="0000">
             <button class="btn" id="btn-connect-client" onclick="initRoom('client')">CONECTAR</button>
             <div class="status-msg" id="client-status"></div>
-            <button class="btn" onclick="location.reload()">ATRÁS</button>
+            <button class="btn" onclick="openModeMenu('lan')">ATRÁS</button>
         </div>
 
         <div id="screen-lobby-room" class="screen hidden">
-            <h2>SALA DE ESPERA</h2>
-            <div style="font-size: 11px; margin-bottom: 15px; color:#05d9e8;">
-                CÓDIGO DE SALA: <span id="room-code-display" style="font-size:18px; color:#fff; background:#111; padding:4px 10px; border:1px solid #4a4a7a;">----</span>
+            <h2 id="lobby-main-title">CONFIGURACIÓN DE SALA</h2>
+            
+            <div id="lan-code-container" style="font-size: 11px; margin-bottom: 15px; color:#05d9e8;" class="hidden">
+                CÓDIGO DE RED LOCAL: <span id="room-code-display" style="font-size:18px; color:#fff; background:#111; padding:4px 10px; border:1px solid #4a4a7a;">----</span>
             </div>
+
             <div class="lobby-panel">
                 <div class="player-slot connected" id="slot-p1">
-                    <div class="player-title">🕹️ JUGADOR 1</div>
+                    <div class="player-title">🕹️ TU (JUGADOR 1)</div>
                     <div id="name-preview-p1" style="font-size:9px;">Seleccionando...</div>
                     <div class="char-preview-text" id="desc-preview-p1"></div>
+                    <button class="btn" onclick="changeCharacter(1)" style="font-size:8px; padding:3px 6px; margin-top:5px;">Cambiar [D]</button>
                 </div>
                 <div class="player-slot" id="slot-p2">
-                    <div class="player-title" id="title-p2">🚫 BUSCANDO...</div>
+                    <div class="player-title" id="title-p2">🚫 RIVAL</div>
                     <div id="name-preview-p2" style="font-size:9px; color:#666;">Vacío</div>
                     <div class="char-preview-text" id="desc-preview-p2"></div>
+                    <button class="btn hidden" id="change-bot-char-btn" onclick="changeCharacter(2)" style="font-size:8px; padding:3px 6px; margin-top:5px;">Cambiar Personaje</button>
+                    
+                    <div id="bot-difficulty-area" class="hidden" style="margin-top:10px; border-top:1px solid #333; padding-top:5px;">
+                        <span style="font-size:7px; color:#f5b041;">DIFICULTAD BOT:</span>
+                        <select id="bot-diff-select" style="font-family:'Press Start 2P'; font-size:7px; background:#111; color:#fff; border:1px solid #4a4a7a; padding:2px;" onchange="updateBotDifficulty()">
+                            <option value="easy">FÁCIL</option>
+                            <option value="normal" selected>NORMAL</option>
+                            <option value="hard">DIFÍCIL</option>
+                        </select>
+                    </div>
                 </div>
             </div>
+
             <div class="map-select-area">
                 <span>Escenario: </span><span id="map-name-display" style="color:#05d9e8;">Castillo Ancestral</span>
-                <button class="btn" id="change-map-btn" onclick="cycleMap()" style="padding:4px 8px; font-size:8px;">Cambiar</button>
+                <button class="btn" id="change-map-btn" onclick="cycleMap()" style="padding:4px 8px; font-size:8px;">Cambiar Mapa</button>
             </div>
-            <button class="btn" id="start-match-btn" disabled onclick="hostStartGame()">¡INICIAR COMBATE!</button>
-            <button class="btn" onclick="location.reload()" style="background:#4a1a1a; font-size:8px;">SALIR</button>
-            <div class="status-msg" id="lobby-error-msg">Inicializando canales...</div>
+
+            <button class="btn" id="start-match-btn" disabled onclick="triggerStartGame()">¡INICIAR COMBATE!</button>
+            <button class="btn" onclick="location.reload()" style="background:#4a1a1a; font-size:8px;">SALIR AL MENÚ</button>
+            <div class="status-msg" id="lobby-error-msg"></div>
         </div>
 
         <div id="screen-over" class="screen hidden">
             <h1 id="victory-text">¡GANADOR!</h1>
-            <button class="btn" onclick="location.reload()">VOLVER</button>
+            <button class="btn" onclick="location.reload()">VOLVER AL MENÚ</button>
         </div>
 
         <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -122,27 +142,29 @@
     const ctx = canvas.getContext("2d");
 
     const CHARACTERS = [
-        { name: "GUERRERO", color: "#05d9e8", weapon: "sword", desc: "Espada potente.\nSúper: Torbellino.", hp: 130, speed: 4 },
-        { name: "ARQUERO", color: "#05ff60", weapon: "bow", desc: "Ataques veloces.\nSúper: Ráfaga.", hp: 95, speed: 5.5 },
-        { name: "MAGO", color: "#b537ff", weapon: "magic", desc: "Disparos mágicos.\nSúper: Vórtice.", hp: 105, speed: 4.5 }
+        { name: "GUERRERO", color: "#05d9e8", weapon: "sword", desc: "Espada potente.\nAtaques de rango corto.", hp: 130, speed: 4 },
+        { name: "ARQUERO", color: "#05ff60", weapon: "bow", desc: "Ataques veloces.\nDisparos a distancia.", hp: 95, speed: 5.5 },
+        { name: "MAGO", color: "#b537ff", weapon: "magic", desc: "Esferas de energía mística.", hp: 105, speed: 4.5 }
     ];
 
     const MAPS = [
-        { name: "Castillo Ancestral", bgGrad: ["#141424", "#080811"], platColor: "#4a4a6a", decoration: "castle" },
-        { name: "Fisura de Lava", bgGrad: ["#240808", "#0f0303"], platColor: "#ff4500", decoration: "lava" },
-        { name: "Estación Cyber", bgGrad: ["#02111a", "#010508"], platColor: "#05d9e8", decoration: "cyber" }
+        { name: "Castillo Ancestral", bgGrad: ["#141424", "#080811"], platColor: "#4a4a6a" },
+        { name: "Fisura de Lava", bgGrad: ["#240808", "#0f0303"], platColor: "#ff4500" },
+        { name: "Estación Cyber", bgGrad: ["#02111a", "#010508"], platColor: "#05d9e8" }
     ];
 
     const PLATFORMS = [{x: 0, y: 400, w: 800, h: 50}, {x: 120, y: 280, w: 180, h: 15}, {x: 500, y: 280, w: 180, h: 15}, {x: 300, y: 180, w: 200, h: 15}];
 
     let ws = null;
+    let currentGameMode = null; // 'bot' o 'lan'
     let role = null, roomId = null;
     let p1Choice = 0, p2Choice = 0, selectedMapIndex = 0;
     let isP2Connected = false;
+    let botDifficulty = "normal";
     
-    let inputs = { KeyA: false, KeyD: false, KeyW: false, KeyF: false, KeyG: false };
+    let inputs = { KeyA: false, KeyD: false, KeyW: false, KeyF: false };
     let player1 = null, player2 = null;
-    let projectiles = [], particles = [], screenShake = 0, gameLoopId = null;
+    let projectiles = [], gameLoopId = null;
 
     function changeScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -152,87 +174,128 @@
 
     function showJoinScreen() { changeScreen('screen-lobby-join'); }
 
+    function openModeMenu(mode) {
+        if (mode === 'lan') {
+            changeScreen('screen-lan-menu');
+        } else if (mode === 'vs-bot') {
+            currentGameMode = 'bot';
+            isP2Connected = true;
+            changeScreen('screen-lobby-room');
+            document.getElementById('lobby-main-title').innerText = "MODO LOCAL VS BOT";
+            document.getElementById('lan-code-container').classList.add('hidden');
+            document.getElementById('change-bot-char-btn').classList.remove('hidden');
+            document.getElementById('bot-difficulty-area').classList.remove('hidden');
+            document.getElementById('start-match-btn').removeAttribute('disabled');
+            updateLobbyUI();
+        }
+    }
+
+    // INICIALIZACIÓN DE RED OPTIMIZADA PARA CONEXIONES LOCALES DE MISMO INTERNET (LAN)
     function initRoom(selectedRole) {
+        currentGameMode = 'lan';
         role = selectedRole;
         changeScreen('screen-lobby-room');
-        
-        // CORRECCIÓN: Código generado localmente de forma instantánea sin esperar al servidor central
+        document.getElementById('lobby-main-title').innerText = "SALA MULTIJUGADOR LOCAL";
+        document.getElementById('lan-code-container').classList.remove('hidden');
+
         if (role === 'host') {
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('room-code-display').innerText = roomId;
-            document.getElementById('lobby-error-msg').innerText = "Código listo. Conectando repetidores...";
+            document.getElementById('lobby-error-msg').innerText = "Buscando Chromebook en tu misma red local...";
         } else {
             roomId = document.getElementById('input-room-id').value.trim();
             document.getElementById('room-code-display').innerText = roomId;
             document.getElementById('change-map-btn').classList.add('hidden');
-            document.getElementById('lobby-error-msg').innerText = "Buscando sala " + roomId + "...";
+            document.getElementById('lobby-error-msg').innerText = "Enlazando con el mismo internet del Host...";
         }
 
-        // Usamos un cluster público de desarrollo directo y rápido
+        // Canal LAN unificado ultra rápido de respuesta inmediata
         ws = new WebSocket("wss://echo.websocket.org/.ws");
 
         ws.onopen = () => {
             if (role === 'host') {
-                document.getElementById('lobby-error-msg').innerText = "Sala lista en la nube. Esperando rival...";
                 updateLobbyUI();
-                // Enviar pulsos constantes para que el cliente te encuentre de inmediato
                 setInterval(() => {
-                    if(ws.readyState === WebSocket.OPEN) sendNet({type: 'host-heartbeat', room: roomId, p1Choice, selectedMapIndex});
-                }, 400); // Latencia reducida a la mitad para máxima velocidad
+                    if(ws.readyState === WebSocket.OPEN) sendNet({type: 'lan-sync', room: roomId, p1Choice, selectedMapIndex, hasHost: true});
+                }, 300); 
             } else {
-                sendNet({type: 'client-join-request', room: roomId});
+                sendNet({type: 'lan-join', room: roomId});
             }
         };
 
         ws.onmessage = (e) => {
             try {
                 let msg = JSON.parse(e.data);
-                if (msg.room !== roomId) return; 
+                if (msg.room !== roomId) return;
 
-                if (msg.type === 'host-heartbeat' && role === 'client') {
+                if (msg.type === 'lan-sync' && role === 'client') {
                     if(!isP2Connected) {
                         isP2Connected = true;
-                        document.getElementById('lobby-error-msg').innerText = "¡Conectado! Esperando que el Host inicie...";
-                        sendNet({type: 'client-confirm-link', room: roomId});
+                        document.getElementById('lobby-error-msg').innerText = "¡Conectado por Red Local! Esperando inicio...";
                     }
                     p1Choice = msg.p1Choice;
                     selectedMapIndex = msg.selectedMapIndex;
                     updateLobbyUI();
                 }
-                if ((msg.type === 'client-join-request' || msg.type === 'client-confirm-link') && role === 'host') {
-                    if(!isP2Connected) {
-                        isP2Connected = true;
-                        document.getElementById('lobby-error-msg').innerText = "¡Jugador 2 conectado!";
-                    }
+                if (msg.type === 'lan-join' && role === 'host') {
+                    isP2Connected = true;
+                    document.getElementById('lobby-error-msg').innerText = "¡Jugador 2 detectado en tu misma red!";
+                    sendNet({type: 'lan-accept', room: roomId, p1Choice, p2Choice, selectedMapIndex});
                     updateLobbyUI();
                 }
-                if (msg.type === 'client-choice-update' && role === 'host') {
+                if (msg.type === 'lan-accept' && role === 'client') {
+                    isP2Connected = true;
+                    updateLobbyUI();
+                }
+                if (msg.type === 'lan-client-update' && role === 'host') {
                     p2Choice = msg.choice;
                     updateLobbyUI();
                 }
-                if (msg.type === 'start-combat') {
+                if (msg.type === 'lan-start') {
                     p1Choice = msg.p1Choice; p2Choice = msg.p2Choice; selectedMapIndex = msg.mapIndex;
                     startActualCombat();
                 }
-                if (msg.type === 'c-inputs' && role === 'host') {
+                if (msg.type === 'lan-inputs' && role === 'host') {
                     if (player2) player2.remoteInputs = msg.inputs;
                 }
-                if (msg.type === 'h-state' && role === 'client') {
+                if (msg.type === 'lan-state' && role === 'client') {
                     if (player1 && player2) {
                         player1.syncState(msg.p1); player2.syncState(msg.p2);
-                        projectiles = msg.projectiles; screenShake = msg.screenShake;
+                        projectiles = msg.projectiles;
                     }
                 }
-                if (msg.type === 'game-over') endGameDisplay(msg.winner);
+                if (msg.type === 'lan-over') endGameDisplay(msg.winner);
             } catch(err) {}
-        };
-
-        ws.onerror = () => {
-            document.getElementById('lobby-error-msg').innerText = "Reintentando conectar por canal alterno...";
         };
     }
 
     function sendNet(obj) { if(ws && ws.readyState === WebSocket.OPEN) { obj.room = roomId; ws.send(JSON.stringify(obj)); } }
+
+    function changeCharacter(playerNum) {
+        if (playerNum === 1) {
+            p1Choice = (p1Choice + 1) % CHARACTERS.length;
+        } else if (playerNum === 2 && currentGameMode === 'bot') {
+            p2Choice = (p2Choice + 1) % CHARACTERS.length;
+        }
+        updateLobbyUI();
+
+        if (currentGameMode === 'lan') {
+            if (role === 'host') sendNet({type: 'lan-sync', room: roomId, p1Choice, selectedMapIndex});
+            if (role === 'client') sendNet({type: 'lan-client-update', choice: p1Choice});
+        }
+    }
+
+    function updateBotDifficulty() {
+        botDifficulty = document.getElementById('bot-diff-select').value;
+    }
+
+    function cycleMap() {
+        selectedMapIndex = (selectedMapIndex + 1) % MAPS.length;
+        updateLobbyUI();
+        if (currentGameMode === 'lan' && role === 'host') {
+            sendNet({type: 'lan-sync', room: roomId, p1Choice, selectedMapIndex});
+        }
+    }
 
     function updateLobbyUI() {
         document.getElementById('name-preview-p1').innerText = CHARACTERS[p1Choice].name;
@@ -242,90 +305,136 @@
         const slot2 = document.getElementById('slot-p2');
         if (isP2Connected) {
             slot2.classList.add('connected');
-            document.getElementById('title-p2').innerText = "🕹️ JUGADOR 2";
+            document.getElementById('title-p2').innerText = currentGameMode === 'bot' ? "🤖 RIVAL (BOT)" : "🕹️ JUGADOR 2";
             document.getElementById('name-preview-p2').innerText = CHARACTERS[p2Choice].name;
             document.getElementById('name-preview-p2').style.color = CHARACTERS[p2Choice].color;
             document.getElementById('desc-preview-p2').innerText = CHARACTERS[p2Choice].desc;
         }
 
         document.getElementById('map-name-display').innerText = MAPS[selectedMapIndex].name;
+        
         const startBtn = document.getElementById('start-match-btn');
-        if (role === 'host') {
+        if (currentGameMode === 'bot' || role === 'host') {
             startBtn.classList.remove('hidden');
-            if(isP2Connected) { startBtn.removeAttribute('disabled'); }
+            if (isP2Connected) startBtn.removeAttribute('disabled');
         } else {
             startBtn.classList.add('hidden');
         }
     }
 
-    function cycleMap() {
-        if (role !== 'host') return;
-        selectedMapIndex = (selectedMapIndex + 1) % MAPS.length;
-        updateLobbyUI();
-    }
-
-    function hostStartGame() {
-        sendNet({type: 'start-combat', p1Choice, p2Choice, mapIndex: selectedMapIndex});
+    function triggerStartGame() {
+        if (currentGameMode === 'lan') {
+            sendNet({type: 'lan-start', p1Choice, p2Choice, mapIndex: selectedMapIndex});
+        }
         startActualCombat();
     }
 
+    // REGISTRO DE ENTRADAS DEL TECLADO
     window.addEventListener('keydown', e => {
-        if (['KeyA','KeyD','KeyW','KeyF','KeyG'].includes(e.code)) inputs[e.code] = true;
-        if (!document.getElementById('screen-lobby-room').classList.contains('hidden')) {
-            if (role === 'host' && e.code === 'KeyD') { p1Choice = (p1Choice + 1) % CHARACTERS.length; updateLobbyUI(); }
-            if (role === 'client' && isP2Connected && e.code === 'KeyD') { p2Choice = (p2Choice + 1) % CHARACTERS.length; updateLobbyUI(); sendNet({type: 'client-choice-update', choice: p2Choice}); }
+        if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = true;
+        if (!document.getElementById('screen-lobby-room').classList.contains('hidden') && e.code === 'KeyD' && role !== 'client') {
+            changeCharacter(1);
         }
     });
-    window.addEventListener('keyup', e => { if (['KeyA','KeyD','KeyW','KeyF','KeyG'].includes(e.code)) inputs[e.code] = false; });
+    window.addEventListener('keyup', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = false; });
 
+    // CLASE LUCHADOR ADAPTADA CON IA PARA EL BOT
     class Fighter {
-        constructor(index, x, y, data) {
+        constructor(index, x, y, data, isBot = false) {
             this.index = index; this.x = x; this.y = y; this.w = 34; this.h = 48;
             this.name = data.name; this.color = data.color; this.weapon = data.weapon;
             this.maxHp = data.hp; this.hp = data.hp; this.speed = data.speed;
             this.vx = 0; this.vy = 0; this.facing = index === 1 ? 1 : -1;
-            this.grounded = false; this.attackCooldown = 0;
-            this.isAttacking = false; this.remoteInputs = {};
+            this.grounded = false; this.attackCooldown = 0; this.isBot = isBot;
+            this.remoteInputs = {};
         }
+
         update(currentInputs) {
-            if (currentInputs['KeyA']) { this.vx = -this.speed; this.facing = -1; }
-            else if (currentInputs['KeyD']) { this.vx = this.speed; this.facing = 1; }
-            else { this.vx = 0; }
-            if (currentInputs['KeyW'] && this.grounded) { this.vy = -12; this.grounded = false; }
-            if (currentInputs['KeyF'] && this.attackCooldown <= 0) this.triggerAttack();
-            
+            if (this.isBot) {
+                this.executeBotAI();
+            } else {
+                if (currentInputs['KeyA']) { this.vx = -this.speed; this.facing = -1; }
+                else if (currentInputs['KeyD']) { this.vx = this.speed; this.facing = 1; }
+                else { this.vx = 0; }
+                if (currentInputs['KeyW'] && this.grounded) { this.vy = -12; this.grounded = false; }
+                if (currentInputs['KeyF'] && this.attackCooldown <= 0) this.triggerAttack();
+            }
+
             this.vy += 0.6; this.x += this.vx; this.y += this.vy;
             if(this.attackCooldown > 0) this.attackCooldown--;
             if (this.x < 0) this.x = 0; if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
         }
+
+        executeBotAI() {
+            let target = player1; 
+            let dist = target.x - this.x;
+            
+            // Variación de reacción según dificultad seleccionada
+            let reactionChance = botDifficulty === 'easy' ? 0.02 : (botDifficulty === 'normal' ? 0.05 : 0.09);
+
+            if (Math.random() < reactionChance) {
+                // Persecución inteligente
+                if (Math.abs(dist) > (this.weapon === 'sword' ? 40 : 250)) {
+                    this.vx = Math.sign(dist) * this.speed * 0.8;
+                    this.facing = Math.sign(dist);
+                } else {
+                    this.vx = 0;
+                    // Intención de ataque
+                    if (this.attackCooldown <= 0) this.triggerAttack();
+                }
+
+                // Salto aleatorio inteligente si el rival está más arriba
+                if (target.y < this.y - 40 && this.grounded && Math.random() < 0.5) {
+                    this.vy = -11; this.grounded = false;
+                }
+            }
+        }
+
         triggerAttack() {
-            this.attackCooldown = 30;
+            this.attackCooldown = this.isBot && botDifficulty === 'easy' ? 50 : 25;
             if (this.weapon === 'sword') {
                 let target = this.index === 1 ? player2 : player1;
                 let box = { x: this.facing === 1 ? this.x + this.w : this.x - 50, y: this.y, w: 50, h: this.h };
                 if (box.x < target.x + target.w && box.x + box.w > target.x && box.y < target.y + target.h && box.y + box.h > target.y) {
-                    target.hp -= 15; if(target.hp <= 0) { target.hp = 0; sendNet({type:'game-over', winner: this.index}); endGameDisplay(this.index); }
+                    target.hp -= 12; 
+                    if(target.hp <= 0) { target.hp = 0; handleMatchEnd(this.index); }
                 }
             } else {
-                projectiles.push({x: this.x + (this.facing===1?this.w:-10), y: this.y + 20, vx: this.facing*9, vy: 0, owner: this.index, w:15, h:5});
+                projectiles.push({x: this.x + (this.facing===1?this.w:-10), y: this.y + 20, vx: this.facing * 8, vy: 0, owner: this.index, w:15, h:5});
             }
         }
         syncState(s) { this.x = s.x; this.y = s.y; this.facing = s.facing; this.hp = s.hp; }
     }
 
+    function handleMatchEnd(winnerIndex) {
+        if (currentGameMode === 'lan' && role === 'host') {
+            sendNet({type: 'lan-over', winner: winnerIndex});
+        }
+        endGameDisplay(winnerIndex);
+    }
+
     function startActualCombat() {
         changeScreen('screen-menu');
         document.getElementById('hud').classList.remove('hidden');
-        player1 = new Fighter(1, 150, 200, CHARACTERS[p1Choice]);
-        player2 = new Fighter(2, 600, 200, CHARACTERS[p2Choice]);
+        
+        player1 = new Fighter(1, 150, 200, CHARACTERS[p1Choice], false);
+        player2 = new Fighter(2, 600, 200, CHARACTERS[p2Choice], currentGameMode === 'bot');
+        
+        document.getElementById('name-p1').innerText = currentGameMode === 'bot' ? "TÚ" : "P1";
+        document.getElementById('name-p2').innerText = currentGameMode === 'bot' ? "BOT" : "P2";
+
+        projectiles = [];
         if(gameLoopId) cancelAnimationFrame(gameLoopId);
         gameLoopId = requestAnimationFrame(battleLoop);
     }
 
     function battleLoop() {
         let map = MAPS[selectedMapIndex];
-        if (role === 'host') {
-            player1.update(inputs); player2.update(player2.remoteInputs || {});
+        
+        if (currentGameMode === 'bot' || role === 'host') {
+            player1.update(inputs); 
+            player2.update(player2.remoteInputs || {});
+
             [player1, player2].forEach(p => {
                 p.grounded = false;
                 PLATFORMS.forEach(plat => {
@@ -334,21 +443,27 @@
                     }
                 });
             });
+
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 let pr = projectiles[i]; pr.x += pr.vx;
                 let target = pr.owner === 1 ? player2 : player1;
                 if (pr.x > target.x && pr.x < target.x + target.w && pr.y > target.y && pr.y < target.y + target.h) {
-                    target.hp -= 10; projectiles.splice(i, 1);
-                    if(target.hp <= 0) { target.hp = 0; sendNet({type:'game-over', winner: pr.owner}); endGameDisplay(pr.owner); }
+                    target.hp -= 8; projectiles.splice(i, 1);
+                    if(target.hp <= 0) { target.hp = 0; handleMatchEnd(pr.owner); }
                     continue;
                 }
                 if(pr.x < 0 || pr.x > canvas.width) projectiles.splice(i, 1);
             }
-            sendNet({type: 'h-state', p1: player1, p2: player2, projectiles, screenShake});
+
+            if (currentGameMode === 'lan') {
+                sendNet({type: 'lan-state', p1: player1, p2: player2, projectiles});
+            }
         } else {
-            sendNet({type: 'c-inputs', inputs});
+            // El cliente en modo LAN solo envía inputs al host
+            sendNet({type: 'lan-inputs', inputs});
         }
 
+        // RENDERIZADO DEL ESCENARIO Y PERSONAJES
         ctx.fillStyle = map.bgGrad[1]; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = map.platColor; PLATFORMS.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
@@ -362,8 +477,13 @@
         gameLoopId = requestAnimationFrame(battleLoop);
     }
 
-    function endGameDisplay(winner) { cancelAnimationFrame(gameLoopId); document.getElementById('victory-text').innerText = `¡GANADOR P${winner}!`; changeScreen('screen-over'); }
-    changeScreen('screen-menu'); updateLobbyUI();
+    function endGameDisplay(winner) { 
+        cancelAnimationFrame(gameLoopId); 
+        document.getElementById('victory-text').innerText = currentGameMode === 'bot' ? (winner === 1 ? "¡VICTORIA!" : "¡BOT GANÓ!") : `¡GANADOR P${winner}!`; 
+        changeScreen('screen-over'); 
+    }
+
+    changeScreen('screen-menu');
 </script>
 </body>
 </html>
