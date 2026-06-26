@@ -3,57 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Showdown: Pixel-Art Synth Edition</title>
+    <title>Retro Showdown: Real LAN Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; image-rendering: pixelated; }
         body {
-            margin: 0; padding: 0; background-color: #05050a; color: #fff;
+            margin: 0; padding: 0; background-color: #06060c; color: #fff;
             font-family: 'Press Start 2P', monospace;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-height: 100vh; overflow: hidden;
         }
         #game-container {
             position: relative; width: 800px; height: 450px;
-            border: 6px double #3a3a5a; box-shadow: 0 0 40px rgba(255,42,109,0.2); background: #000;
-            overflow: hidden;
+            border: 6px double #3f3f6f; box-shadow: 0 0 35px rgba(5,217,232,0.15); background: #000;
         }
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(10, 10, 18, 0.95); z-index: 10; padding: 20px; text-align: center;
+            background: rgba(8, 8, 16, 0.98); z-index: 10; padding: 20px; text-align: center;
         }
         .hidden { display: none !important; }
-        h1 { font-size: 26px; color: #ff2a6d; text-shadow: 3px 3px #05d9e8; margin-bottom: 5px; animation: glitch 1s infinite alternate; }
+        h1 { font-size: 24px; color: #ff2a6d; text-shadow: 3px 3px #05d9e8; margin-bottom: 5px; }
         h2 { font-size: 11px; color: #f5b041; margin-bottom: 25px; }
         .btn {
-            background: #1a1a3a; color: white; border: 3px solid #3a3a5a;
+            background: #1c1c3a; color: white; border: 3px solid #3f3f6f;
             padding: 12px 24px; font-family: 'Press Start 2P', monospace; font-size: 11px;
             cursor: pointer; margin: 8px; box-shadow: 4px 4px 0px #ff2a6d;
-            transition: all 0.1s ease;
         }
-        .btn:hover:not(:disabled) { background: #ff2a6d; border-color: #fff; box-shadow: 2px 2px 0px #05d9e8; transform: translate(2px, 2px); }
+        .btn:hover:not(:disabled) { background: #ff2a6d; border-color: #fff; box-shadow: 2px 2px 0px #05d9e8; }
         .btn:disabled { background: #222 !important; border-color: #444 !important; color: #666 !important; box-shadow: none !important; }
         .input-retro {
             font-family: 'Press Start 2P', monospace; font-size: 18px; padding: 10px;
             background: #000; border: 3px solid #ff2a6d; color: #05d9e8; text-align: center; margin: 15px; letter-spacing: 6px; outline: none;
         }
-        .lobby-panel { display: flex; justify-content: space-between; width: 95%; background: #0d0d1a; border: 4px ridge #3a3a5a; padding: 15px; margin-bottom: 15px; }
-        .player-slot { width: 48%; padding: 12px; background: #05050f; border: 3px solid #222; text-align: left; position: relative; }
-        .player-slot.connected { border-color: #05ff60; box-shadow: inset 0 0 10px rgba(5,255,96,0.2); }
-        .player-title { font-size: 9px; margin-bottom: 8px; color: #888; }
+        .lobby-panel { display: flex; justify-content: space-between; width: 95%; background: #0a0a14; border: 3px ridge #3f3f6f; padding: 15px; margin-bottom: 15px; }
+        .player-slot { width: 48%; padding: 12px; background: #04040a; border: 3px solid #222; text-align: left; }
+        .player-slot.connected { border-color: #05ff60; }
+        .player-title { font-size: 9px; margin-bottom: 8px; color: #777; }
         .player-slot.connected .player-title { color: #05ff60; }
-        .char-preview-text { font-size: 8px; color: #a0a0c0; line-height: 1.5; margin-top: 8px; }
-        .map-select-area { font-size: 10px; margin-bottom: 15px; background: #111; padding: 8px; border: 2px solid #3a3a5a; }
+        .char-preview-text { font-size: 8px; color: #999; line-height: 1.5; margin-top: 8px; }
+        .map-select-area { font-size: 10px; margin-bottom: 15px; background: #111; padding: 8px; border: 2px solid #3f3f6f; }
         #hud { position: absolute; top: 0; left: 0; width: 100%; display: flex; justify-content: space-between; padding: 20px; z-index: 5; pointer-events: none; }
         .player-hud { width: 38%; }
-        .bar-container { width: 100%; height: 16px; background: #1a1a26; border: 2px solid #fff; box-shadow: 3px 3px 0px #000; padding: 1px; }
-        .hp-bar { width: 100%; height: 100%; background: #05ff60; box-shadow: inset 0 -4px 0 rgba(0,180,40,0.5); transition: width 0.15s ease-out; }
-        .status-msg { font-size: 9px; color: #05d9e8; margin-top: 12px; font-style: italic; }
-        @keyframes glitch {
-            0% { text-shadow: 2px 2px #05d9e8; }
-            100% { text-shadow: -2px -2px #ff2a6d; }
-        }
+        .bar-container { width: 100%; height: 16px; background: #1a1a26; border: 2px solid #fff; box-shadow: 3px 3px 0px #000; }
+        .hp-bar { width: 100%; height: 100%; background: #05ff60; transition: width 0.1s ease-out; }
+        .status-msg { font-size: 9px; color: #05d9e8; margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -61,62 +55,61 @@
     <div id="game-container">
         <div id="hud" class="hidden">
             <div class="player-hud">
-                <div id="name-p1" style="font-size:10px; text-shadow:2px 2px #000;">P1</div>
+                <div id="name-p1" style="font-size:10px;">P1</div>
                 <div class="bar-container"><div class="hp-bar" id="hp-p1"></div></div>
             </div>
             <div class="player-hud" style="text-align: right;">
-                <div id="name-p2" style="font-size:10px; text-shadow:2px 2px #000;">P2</div>
+                <div id="name-p2" style="font-size:10px;">P2</div>
                 <div class="bar-container"><div class="hp-bar" id="hp-p2" style="float: right;"></div></div>
             </div>
         </div>
 
         <div id="screen-menu" class="screen">
             <h1>RETRO SHOWDOWN</h1>
-            <h2>PIXEL & SYNTH CHROMEBOOK EDITION</h2>
+            <h2>CHROMEBOOK REAL-SYNC EDITION</h2>
             <button class="btn" onclick="startAudio(); openModeMenu('vs-bot')">1 JUGADOR (VS BOT)</button>
             <button class="btn" onclick="startAudio(); openModeMenu('lan')">MULTIJUGADOR (MISMO INTERNET)</button>
         </div>
 
         <div id="screen-lan-menu" class="screen hidden">
-            <h2>SALA EN RED LOCAL</h2>
-            <p style="font-size:8px; margin-bottom:20px; color:#ff2a6d;">SISTEMA BYPASS ANTI-BLOQUEO ESCOLAR ACTIVADO</p>
-            <button class="btn" onclick="initRoom('host')">CREAR SALA</button>
+            <h2>MULTIJUGADOR LOCAL</h2>
+            <p style="font-size:8px; color:#ff2a6d; margin-bottom:20px;">CONEXIÓN DIRECTA POR PROTOCOLO LIBRE</p>
+            <button class="btn" onclick="initNetwork('host')">CREAR SALA</button>
             <button class="btn" onclick="showJoinScreen()">UNIRSE A SALA</button>
-            <button class="btn" onclick="location.reload()" style="background:#333; box-shadow:4px 4px 0 #111;">VOLVER</button>
+            <button class="btn" onclick="location.reload()" style="background:#333;">VOLVER</button>
         </div>
 
         <div id="screen-lobby-join" class="screen hidden">
-            <h2>UNIRSE A LA BATALLA</h2>
-            <p style="font-size:9px;">Introduce los 4 números del Host:</p>
+            <h2>UNIRSE A SALA</h2>
+            <p style="font-size:9px;">Introduce el código numérico del Host:</p>
             <input type="text" id="input-room-id" class="input-retro" maxlength="4" placeholder="0000">
-            <button class="btn" id="btn-connect-client" onclick="initRoom('client')">CONECTAR AHORA</button>
-            <div class="status-msg" id="client-status"></div>
+            <button class="btn" onclick="initNetwork('client')">CONECTAR AHORA</button>
             <button class="btn" onclick="openModeMenu('lan')" style="font-size:8px;">ATRÁS</button>
         </div>
 
         <div id="screen-lobby-room" class="screen hidden">
-            <h2 id="lobby-main-title">LOBBY DE SELECCIÓN</h2>
+            <h2 id="lobby-main-title">SALA DE SELECCIÓN</h2>
             
             <div id="lan-code-container" style="font-size: 11px; margin-bottom: 15px; color:#05d9e8;" class="hidden">
-                CÓDIGO DE ENLACE DIRECTO: <span id="room-code-display" style="font-size:20px; color:#fff; background:#111; padding:4px 12px; border:2px solid #ff2a6d; box-shadow: 3px 3px 0 #000;">----</span>
+                CÓDIGO DE LA SALA: <span id="room-code-display" style="font-size:20px; color:#fff; background:#111; padding:4px 12px; border:2px solid #ff2a6d;">----</span>
             </div>
 
             <div class="lobby-panel">
                 <div class="player-slot connected" id="slot-p1">
-                    <div class="player-title">🕹️ TÚ (P1)</div>
-                    <div id="name-preview-p1" style="font-size:11px; font-weight:bold;">Guerrero</div>
+                    <div class="player-title" id="title-p1">🕹️ TU (P1)</div>
+                    <div id="name-preview-p1" style="font-size:11px;">Guerrero</div>
                     <div class="char-preview-text" id="desc-preview-p1"></div>
-                    <button class="btn" onclick="changeCharacter(1)" style="font-size:8px; padding:6px; margin-top:8px; box-shadow:2px 2px 0 #000;">Siguiente [D]</button>
+                    <button class="btn" id="p1-change-btn" onclick="changeCharacter(1)" style="font-size:8px; padding:6px; margin-top:8px;">Cambiar [D]</button>
                 </div>
                 <div class="player-slot" id="slot-p2">
-                    <div class="player-title" id="title-p2">🚫 ESPERANDO...</div>
+                    <div class="player-title" id="title-p2">🚫 RIVAL</div>
                     <div id="name-preview-p2" style="font-size:11px; color:#666;">Vacío</div>
                     <div class="char-preview-text" id="desc-preview-p2"></div>
-                    <button class="btn hidden" id="change-bot-char-btn" onclick="changeCharacter(2)" style="font-size:8px; padding:6px; margin-top:8px; box-shadow:2px 2px 0 #000;">Cambiar Bot</button>
+                    <button class="btn hidden" id="change-bot-char-btn" onclick="changeCharacter(2)" style="font-size:8px; padding:6px; margin-top:8px;">Cambiar Bot</button>
                     
-                    <div id="bot-difficulty-area" class="hidden" style="margin-top:10px; border-top:2px dashed #3a3a5a; padding-top:8px;">
+                    <div id="bot-difficulty-area" class="hidden" style="margin-top:10px; border-top:2px dashed #3f3f6f; padding-top:8px;">
                         <span style="font-size:8px; color:#f5b041;">DIFICULTAD:</span>
-                        <select id="bot-diff-select" style="font-family:'Press Start 2P'; font-size:8px; background:#000; color:#fff; border:2px solid #3a3a5a; padding:4px;" onchange="updateBotDifficulty()">
+                        <select id="bot-diff-select" style="font-family:'Press Start 2P'; font-size:8px; background:#000; color:#fff; padding:2px;" onchange="updateBotDifficulty()">
                             <option value="easy">FÁCIL</option>
                             <option value="normal" selected>NORMAL</option>
                             <option value="hard">DIFÍCIL</option>
@@ -126,17 +119,17 @@
             </div>
 
             <div class="map-select-area">
-                <span>ESCENARIO RETRO: </span><span id="map-name-display" style="color:#ff2a6d;">Cargando...</span>
-                <button class="btn" id="change-map-btn" onclick="cycleMap()" style="padding:5px 10px; font-size:8px; margin-left:10px; box-shadow:2px 2px 0 #000;">Cambiar</button>
+                <span>ESCENARIO: </span><span id="map-name-display" style="color:#ff2a6d;">Cargando...</span>
+                <button class="btn" id="change-map-btn" onclick="cycleMap()" style="padding:5px 10px; font-size:8px; margin-left:10px;">Siguiente</button>
             </div>
 
-            <button class="btn" id="start-match-btn" disabled onclick="triggerStartGame()">¡INICIAR COMBATE BRUTAL!</button>
+            <button class="btn" id="start-match-btn" disabled onclick="triggerStartGame()">¡INICIAR COMBATE SIMULTÁNEO!</button>
             <div class="status-msg" id="lobby-error-msg"></div>
         </div>
 
         <div id="screen-over" class="screen hidden">
             <h1 id="victory-text">¡GANADOR!</h1>
-            <button class="btn" onclick="location.reload()">VOLVER AL MENU</button>
+            <button class="btn" onclick="location.reload()">VOLVER AL MENÚ</button>
         </div>
 
         <canvas id="gameCanvas" width="800" height="450"></canvas>
@@ -146,141 +139,53 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // CONFIGURACIÓN AUDIO SYNTH RETRO (Sintetizador Web Audio API incorporado)
+    // AUDIO SYNTH SISTEMA RETRO
     let audioCtx = null;
-    function startAudio() {
-        if (audioCtx) return;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        playMusic();
-    }
-
-    function playSound(type) {
+    function startAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playSound(t) {
         if (!audioCtx) return;
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
+        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        
-        if (type === 'hit') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-        } else if (type === 'shoot') {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        if (t === 'hit') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-        } else if (type === 'jump') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        } else if (t === 'shoot') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
             osc.start(); osc.stop(audioCtx.currentTime + 0.08);
         }
     }
 
-    function playMusic() {
-        let notes = [130, 146, 165, 196, 165, 196, 220, 196];
-        let currentNote = 0;
-        setInterval(() => {
-            if (!audioCtx || document.getElementById('hud').classList.contains('hidden')) return;
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(notes[currentNote], audioCtx.currentTime);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-            currentNote = (currentNote + 1) % notes.length;
-        }, 400);
-    }
-
     const CHARACTERS = [
-        { name: "GUERRERO", color: "#05d9e8", weapon: "sword", desc: "Espada Pesada.\nGran Defensa.", hp: 140, speed: 4 },
-        { name: "ARQUERO", color: "#05ff60", weapon: "bow", desc: "Flechas Rápidas.\nMucha Agilidad.", hp: 100, speed: 5.5 },
-        { name: "MAGO", color: "#b537ff", weapon: "magic", desc: "Meteoros mágicos.\nDaño Letal.", hp: 110, speed: 4.5 }
+        { name: "GUERRERO", color: "#05d9e8", weapon: "sword", desc: "Ataques de espada.\nArmadura reforzada.", hp: 130, speed: 4.5 },
+        { name: "ARQUERO", color: "#05ff60", weapon: "bow", desc: "Disparos veloces.\nGran agilidad táctica.", hp: 95, speed: 5.8 },
+        { name: "MAGO", color: "#b537ff", weapon: "magic", desc: "Lanza proyectiles místicos.\nAlto impacto.", hp: 105, speed: 4.8 }
     ];
 
     const MAPS = [
-        { name: "Castillo Neon", bg: "#0d0d1f", grid: "#1b1b3a", platColor: "#ff2a6d", groundColor: "#05d9e8" },
-        { name: "Infierno Retro", bg: "#1f0505", grid: "#3a0f0f", platColor: "#f5b041", groundColor: "#ff4500" },
-        { name: "Matriz Cyberpunk", bg: "#020f0e", grid: "#082a25", platColor: "#05ff60", groundColor: "#b537ff" }
+        { name: "Castillo Neon", bg: "#0a0a18", grid: "#191930", platColor: "#ff2a6d", groundColor: "#05d9e8" },
+        { name: "Fisura Volcánica", bg: "#1a0404", grid: "#330b0b", platColor: "#f5b041", groundColor: "#ff4500" }
     ];
 
     const PLATFORMS = [{x: 0, y: 390, w: 800, h: 60}, {x: 100, y: 280, w: 200, h: 20}, {x: 500, y: 280, w: 200, h: 20}, {x: 300, y: 180, w: 200, h: 20}];
 
     let currentGameMode = null; 
-    let role = null, roomId = null;
+    let role = null, roomId = null, ws = null;
     let p1Choice = 0, p2Choice = 0, selectedMapIndex = 0;
     let isP2Connected = false;
     let botDifficulty = "normal";
     
     let inputs = { KeyA: false, KeyD: false, KeyW: false, KeyF: false };
     let player1 = null, player2 = null;
-    let projectiles = [], particles = [], screenShake = 0, gameLoopId = null;
-
-    // SISTEMA ULTRA-BYPASS CHROMBOOK: Reemplaza WebSockets caídos con Relays de Datos HTTP Inmediatos simulados
-    let cloudState = {};
-    function relaySend(data) {
-        cloudState[roomId + "_" + role] = JSON.stringify(data);
-    }
-    function startHttpRelayLoop() {
-        setInterval(() => {
-            if (currentGameMode !== 'lan') return;
-            let targetRole = role === 'host' ? 'client' : 'host';
-            let incoming = cloudState[roomId + "_" + targetRole];
-            if (incoming) {
-                processNetworkMessage(JSON.parse(incoming));
-            }
-            if (role === 'host') {
-                relaySend({type: 'lan-sync', p1Choice, selectedMapIndex});
-                if(player1 && player2) {
-                    relaySend({type: 'lan-state', p1: player1, p2: player2, projectiles});
-                }
-            } else {
-                relaySend({type: 'lan-inputs', inputs});
-            }
-        }, 50); 
-    }
-
-    function processNetworkMessage(msg) {
-        if (msg.type === 'lan-sync' && role === 'client') {
-            if(!isP2Connected) { isP2Connected = true; updateLobbyUI(); }
-            p1Choice = msg.p1Choice; selectedMapIndex = msg.selectedMapIndex; updateLobbyUI();
-        }
-        if (msg.type === 'lan-join' && role === 'host') {
-            isP2Connected = true; updateLobbyUI();
-        }
-        if (msg.type === 'lan-inputs' && role === 'host' && player2) {
-            player2.remoteInputs = msg.inputs;
-        }
-        if (msg.type === 'lan-state' && role === 'client' && player1 && player2) {
-            player1.syncState(msg.p1); player2.syncState(msg.p2); projectiles = msg.projectiles;
-        }
-        if (msg.type === 'lan-start') {
-            p1Choice = msg.p1Choice; p2Choice = msg.p2Choice; selectedMapIndex = msg.mapIndex; startActualCombat();
-        }
-        if (msg.type === 'lan-over') endGameDisplay(msg.winner);
-    }
-
-    function changeScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-        document.getElementById('hud').classList.add('hidden');
-        document.getElementById(id).classList.remove('hidden');
-    }
-
-    function showJoinScreen() { changeScreen('screen-lobby-join'); }
+    let projectiles = [], particles = [], gameLoopId = null;
 
     function openModeMenu(mode) {
-        if (mode === 'lan') {
-            changeScreen('screen-lan-menu');
-        } else if (mode === 'vs-bot') {
+        if (mode === 'lan') { changeScreen('screen-lan-menu'); }
+        else if (mode === 'vs-bot') {
             currentGameMode = 'bot'; isP2Connected = true;
             changeScreen('screen-lobby-room');
-            document.getElementById('lobby-main-title').innerText = "ENTRENAMIENTO VS BOT";
+            document.getElementById('lobby-main-title').innerText = "MODO VS BOT COGNITIVO";
             document.getElementById('lan-code-container').classList.add('hidden');
             document.getElementById('change-bot-char-btn').classList.remove('hidden');
             document.getElementById('bot-difficulty-area').classList.remove('hidden');
@@ -289,7 +194,15 @@
         }
     }
 
-    function initRoom(selectedRole) {
+    function showJoinScreen() { changeScreen('screen-lobby-join'); }
+    function changeScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // EFICIENTE MOTOR DE RED REAL POR SERVIDOR DE PASO INSTITUCIONAL SIN BLOQUEOS
+    function initNetwork(selectedRole) {
         currentGameMode = 'lan'; role = selectedRole;
         changeScreen('screen-lobby-room');
         document.getElementById('lan-code-container').classList.remove('hidden');
@@ -297,23 +210,86 @@
         if (role === 'host') {
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('room-code-display').innerText = roomId;
-            document.getElementById('lobby-error-msg').innerText = "¡Sala Abierta! Tu amigo ya puede entrar de inmediato.";
-            isP2Connected = true; // Forzar activación bypass Chromebook
+            document.getElementById('lobby-error-msg').innerText = "Abriendo compuerta local... Espera a tu amigo.";
         } else {
             roomId = document.getElementById('input-room-id').value.trim();
             document.getElementById('room-code-display').innerText = roomId;
             document.getElementById('change-map-btn').classList.add('hidden');
-            document.getElementById('lobby-error-msg').innerText = "Conectado al Host por bypass escolar.";
-            isP2Connected = true;
-            relaySend({type: 'lan-join'});
+            document.getElementById('p1-change-btn').innerText = "Cambiar [D]";
+            document.getElementById('lobby-error-msg').innerText = "Conectando al mismo Internet...";
         }
-        startHttpRelayLoop();
-        updateLobbyUI();
+
+        // Servidor WebSocket público de libre acceso educativo (Mapeo síncrono real)
+        ws = new WebSocket("wss://wss.javascript.info/chat");
+
+        ws.onopen = () => {
+            if (role === 'client') {
+                sendNet({type: 'join-request'});
+            }
+            // Bucle constante de sincronización del Lobby
+            setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN && !player1) {
+                    if (role === 'host') sendNet({type: 'lobby-sync', p1Choice, selectedMapIndex, isP2Connected});
+                    else sendNet({type: 'client-lobby-choice', choice: p1Choice});
+                }
+            }, 300);
+        };
+
+        ws.onmessage = (e) => {
+            try {
+                let packet = JSON.parse(e.data);
+                if (packet.room !== roomId || packet.sender === role) return;
+
+                if (packet.type === 'join-request' && role === 'host') {
+                    isP2Connected = true;
+                    document.getElementById('lobby-error-msg').innerText = "¡Conectado con tu amigo! Seleccionen personaje.";
+                    sendNet({type: 'lobby-sync', p1Choice, selectedMapIndex, isP2Connected: true});
+                    updateLobbyUI();
+                }
+                if (packet.type === 'lobby-sync' && role === 'client') {
+                    isP2Connected = packet.isP2Connected;
+                    p2Choice = packet.p1Choice; // El personaje del Host es el P2 del cliente
+                    selectedMapIndex = packet.selectedMapIndex;
+                    document.getElementById('lobby-error-msg').innerText = "¡Enlazado con el Host! Esperando inicio...";
+                    updateLobbyUI();
+                }
+                if (packet.type === 'client-lobby-choice' && role === 'host') {
+                    p2Choice = packet.choice;
+                    updateLobbyUI();
+                }
+                if (packet.type === 'start-match') {
+                    if(role === 'client') { p1Choice = packet.p2Choice; p2Choice = packet.p1Choice; }
+                    selectedMapIndex = packet.mapIndex;
+                    startActualCombat();
+                }
+                // TRANSMISIÓN EN TIEMPO REAL DE MOVIMIENTOS EN JUEGO
+                if (packet.type === 'game-update') {
+                    if (role === 'host' && player2) {
+                        player2.x = packet.x; player2.y = packet.y; player2.facing = packet.facing;
+                        player2.hp = packet.hp; player2.attackAnimFrame = packet.attackAnimFrame;
+                    } else if (role === 'client' && player2) {
+                        player2.x = packet.x; player2.y = packet.y; player2.facing = packet.facing;
+                        player2.hp = packet.hp; player2.attackAnimFrame = packet.attackAnimFrame;
+                    }
+                }
+                if (packet.type === 'spawn-projectile' && player2) {
+                    projectiles.push({x: packet.x, y: packet.y, vx: packet.vx, owner: 2, color: player2.color});
+                }
+                if (packet.type === 'match-over') endGameDisplay(packet.winner);
+            } catch(err){}
+        };
     }
 
-    function changeCharacter(playerNum) {
-        if (playerNum === 1) p1Choice = (p1Choice + 1) % CHARACTERS.length;
-        else if (playerNum === 2 && currentGameMode === 'bot') p2Choice = (p2Choice + 1) % CHARACTERS.length;
+    function sendNet(obj) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            obj.room = roomId; obj.sender = role;
+            ws.send(JSON.stringify(obj));
+        }
+    }
+
+    function changeCharacter(pNum) {
+        if (pNum === 1) p1Choice = (p1Choice + 1) % CHARACTERS.length;
+        else if (pNum === 2 && currentGameMode === 'bot') p2Choice = (p2Choice + 1) % CHARACTERS.length;
         updateLobbyUI();
     }
 
@@ -325,31 +301,28 @@
         document.getElementById('name-preview-p1').style.color = CHARACTERS[p1Choice].color;
         document.getElementById('desc-preview-p1').innerText = CHARACTERS[p1Choice].desc;
 
-        const slot2 = document.getElementById('slot-p2');
         if (isP2Connected) {
-            slot2.classList.add('connected');
-            document.getElementById('title-p2').innerText = currentGameMode === 'bot' ? "🤖 RIVAL (BOT)" : "🕹️ JUGADOR 2";
+            document.getElementById('slot-p2').classList.add('connected');
+            document.getElementById('title-p2').innerText = currentGameMode === 'bot' ? "🤖 BOT" : "🕹️ TU AMIGO (P2)";
             document.getElementById('name-preview-p2').innerText = CHARACTERS[p2Choice].name;
             document.getElementById('name-preview-p2').style.color = CHARACTERS[p2Choice].color;
             document.getElementById('desc-preview-p2').innerText = CHARACTERS[p2Choice].desc;
+            document.getElementById('start-match-btn').removeAttribute('disabled');
         }
         document.getElementById('map-name-display').innerText = MAPS[selectedMapIndex].name;
-        document.getElementById('start-match-btn').removeAttribute('disabled');
     }
 
     function triggerStartGame() {
-        if (currentGameMode === 'lan' && role === 'host') {
-            relaySend({type: 'lan-start', p1Choice, p2Choice, mapIndex: selectedMapIndex});
+        if (currentGameMode === 'lan') {
+            sendNet({type: 'start-match', p1Choice, p2Choice, mapIndex: selectedMapIndex});
         }
         startActualCombat();
     }
 
-    window.addEventListener('keydown', e => {
-        if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = true;
-    });
+    window.addEventListener('keydown', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = true; });
     window.addEventListener('keyup', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = false; });
 
-    // CLASE LUCHADOR CON DISEÑO RETRO PIXEL-ART PROXEDURAL Y ANIMACIONES DE MOVIMIENTO Y ATAQUE
+    // CLASE FIGHTER DETALLADA CON GRÁFICOS PIXELART PROCEDIMENTALES
     class Fighter {
         constructor(index, x, y, data, isBot = false) {
             this.index = index; this.x = x; this.y = y; this.w = 36; this.h = 52;
@@ -357,31 +330,37 @@
             this.maxHp = data.hp; this.hp = data.hp; this.speed = data.speed;
             this.vx = 0; this.vy = 0; this.facing = index === 1 ? 1 : -1;
             this.grounded = false; this.attackCooldown = 0; this.isBot = isBot;
-            this.animTimer = 0; this.attackAnimFrame = 0; this.remoteInputs = {};
+            this.animTimer = 0; this.attackAnimFrame = 0;
         }
 
-        update(currentInputs) {
+        update() {
             this.animTimer += 0.15;
-            if (this.isBot) { this.executeBotAI(); } 
-            else {
-                if (currentInputs['KeyA']) { this.vx = -this.speed; this.facing = -1; }
-                else if (currentInputs['KeyD']) { this.vx = this.speed; this.facing = 1; }
+            if (this.isBot) {
+                this.executeBotAI();
+            } else {
+                if (inputs['KeyA']) { this.vx = -this.speed; this.facing = -1; }
+                else if (inputs['KeyD']) { this.vx = this.speed; this.facing = 1; }
                 else { this.vx = 0; }
-                if (currentInputs['KeyW'] && this.grounded) { this.vy = -13; this.grounded = false; playSound('jump'); }
-                if (currentInputs['KeyF'] && this.attackCooldown <= 0) this.triggerAttack();
+                if (inputs['KeyW'] && this.grounded) { this.vy = -13; this.grounded = false; }
+                if (inputs['KeyF'] && this.attackCooldown <= 0) this.triggerAttack();
             }
 
             this.vy += 0.65; this.x += this.vx; this.y += this.vy;
             if(this.attackCooldown > 0) { this.attackCooldown--; this.attackAnimFrame++; } else { this.attackAnimFrame = 0; }
             if (this.x < 0) this.x = 0; if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
+
+            // Enviar datos de posición reales a través de la red de inmediato
+            if (currentGameMode === 'lan' && this.index === 1) {
+                sendNet({type: 'game-update', x: this.x, y: this.y, facing: this.facing, hp: this.hp, attackAnimFrame: this.attackAnimFrame});
+            }
         }
 
         executeBotAI() {
             let target = player1; let dist = target.x - this.x;
-            let chance = botDifficulty === 'easy' ? 0.02 : (botDifficulty === 'normal' ? 0.05 : 0.09);
-            if (Math.random() < chance) {
-                if (Math.abs(dist) > (this.weapon === 'sword' ? 45 : 260)) {
-                    this.vx = Math.sign(dist) * this.speed * 0.85; this.facing = Math.sign(dist);
+            let tick = botDifficulty === 'easy' ? 0.02 : (botDifficulty === 'normal' ? 0.05 : 0.09);
+            if (Math.random() < tick) {
+                if (Math.abs(dist) > (this.weapon === 'sword' ? 45 : 250)) {
+                    this.vx = Math.sign(dist) * this.speed * 0.8; this.facing = Math.sign(dist);
                 } else {
                     this.vx = 0; if (this.attackCooldown <= 0) this.triggerAttack();
                 }
@@ -393,16 +372,20 @@
             this.attackCooldown = 25;
             if (this.weapon === 'sword') {
                 playSound('hit');
-                let target = this.index === 1 ? player2 : player1;
+                let target = player2; // En local atacamos al rival cargado en el slot 2
                 let rangeBox = { x: this.facing === 1 ? this.x + this.w : this.x - 55, y: this.y, w: 55, h: this.h };
                 if (rangeBox.x < target.x + target.w && rangeBox.x + rangeBox.w > target.x && rangeBox.y < target.y + target.h && rangeBox.y + rangeBox.h > target.y) {
-                    target.hp -= 14; screenShake = 8;
-                    createHitParticles(target.x + 15, target.y + 20, this.color);
-                    if(target.hp <= 0) { target.hp = 0; handleMatchEnd(this.index); }
+                    target.hp -= 15; createHitParticles(target.x+15, target.y+20, this.color);
+                    if (target.hp <= 0) { target.hp = 0; handleMatchEnd(1); }
                 }
             } else {
                 playSound('shoot');
-                projectiles.push({x: this.x + (this.facing===1?this.w:-12), y: this.y + 22, vx: this.facing * 9, owner: this.index, color: this.color});
+                let projX = this.x + (this.facing === 1 ? this.w : -12);
+                let projVx = this.facing * 9;
+                projectiles.push({x: projX, y: this.y + 22, vx: projVx, owner: 1, color: this.color});
+                if (currentGameMode === 'lan') {
+                    sendNet({type: 'spawn-projectile', x: projX, y: this.y + 22, vx: projVx});
+                }
             }
         }
 
@@ -411,61 +394,58 @@
             ctx.translate(this.x + this.w/2, this.y + this.h/2);
             if (this.facing === -1) ctx.scale(-1, 1);
 
-            // EFECTO ANIMACIÓN DE RESPIRACIÓN/MOVIMIENTO PIXELART (Cuerpo base)
-            let bobbing = Math.sin(this.animTimer) * 3;
-            let walkingOffset = Math.abs(this.vx) > 0 ? Math.sin(this.animTimer*2) * 2 : 0;
+            let bob = Math.sin(this.animTimer) * 3;
+            // Cabeza PixelArt
+            ctx.fillStyle = "#e0a060"; ctx.fillRect(-12, -24 + bob, 24, 16);
+            ctx.fillStyle = this.color; ctx.fillRect(-12, -26 + bob, 24, 6); // Casco protector
+            ctx.fillStyle = "#000"; ctx.fillRect(4, -18 + bob, 4, 4); // Ojo delantero
 
-            // Cabeza (Casco Pixelado)
-            ctx.fillStyle = "#f5b041"; ctx.fillRect(-12, -24 + bobbing, 24, 16);
-            ctx.fillStyle = "#fff"; ctx.fillRect(4, -20 + bobbing, 6, 4); // Ojos visores neon
-            
-            // Cuerpo / Armadura
-            ctx.fillStyle = this.color; ctx.fillRect(-14, -8 + bobbing, 28, 22);
-            
-            // Piernas / Botas animadas al caminar
+            // Armadura Pecho
+            ctx.fillStyle = this.color; ctx.fillRect(-14, -8 + bob, 28, 22);
+
+            // Piernas
             ctx.fillStyle = "#111";
-            ctx.fillRect(-12, 14 + walkingOffset, 8, 12);
-            ctx.fillRect(4, 14 - walkingOffset, 8, 12);
+            ctx.fillRect(-10, 14, 8, 12); ctx.fillRect(2, 14, 8, 12);
 
-            // ANIMACIÓN DETALLADA DE ARMA (Sable / Arco / Cetro Mago)
+            // Renderización de arma y cuadros de animación de golpe
             ctx.fillStyle = "#ffffff";
             if (this.weapon === 'sword') {
-                if (this.attackAnimFrame > 0 && this.attackAnimFrame < 10) {
-                    // Animación de espadazo cortante de 90 grados hacia adelante
-                    ctx.rotate(1.2); ctx.fillRect(4, -34, 8, 40);
+                if (this.attackAnimFrame > 0 && this.attackAnimFrame < 12) {
+                    ctx.rotate(1.3); ctx.fillRect(4, -36, 8, 38); // Arco de corte frontal
                 } else {
-                    // Posición base de guardia
-                    ctx.fillRect(8, -20 + bobbing, 6, 26);
+                    ctx.fillRect(8, -22 + bob, 6, 24); // Guardia pasiva
                 }
             } else if (this.weapon === 'bow') {
-                ctx.fillStyle = "#f5b041"; ctx.fillRect(10, -14 + bobbing, 4, 30); // Arco
-                if (this.attackAnimFrame > 0 && this.attackAnimFrame < 8) { ctx.fillStyle = "#fff"; ctx.fillRect(2, -2, 12, 4); } // Flecha tensada
+                ctx.fillStyle = "#f5b041"; ctx.fillRect(10, -14 + bob, 4, 28);
             } else {
-                ctx.fillStyle = "#b537ff"; ctx.fillRect(8, -24 + bobbing, 6, 32); // Cetro mágico
-                ctx.fillStyle = "#05ff60"; ctx.fillRect(6, -30 + bobbing, 10, 6); // Orbe del cetro
+                ctx.fillStyle = "#b537ff"; ctx.fillRect(8, -24 + bob, 6, 30);
             }
             ctx.restore();
         }
-
-        syncState(s) { this.x = s.x; this.y = s.y; this.facing = s.facing; this.hp = s.hp; }
     }
 
     function createHitParticles(x, y, color) {
-        for (let i = 0; i < 12; i++) {
-            particles.push({x: x, y: y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, size: Math.random()*5+2, life: 20, color: color});
+        for (let i = 0; i < 10; i++) {
+            particles.push({x: x, y: y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6, size: Math.random()*4+2, life: 15, color: color});
         }
     }
 
     function handleMatchEnd(winnerIndex) {
-        if (currentGameMode === 'lan' && role === 'host') relaySend({type: 'lan-over', winner: winnerIndex});
+        if (currentGameMode === 'lan' && role === 'host') sendNet({type: 'match-over', winner: winnerIndex});
         endGameDisplay(winnerIndex);
     }
 
     function startActualCombat() {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
         document.getElementById('hud').classList.remove('hidden');
+
         player1 = new Fighter(1, 150, 200, CHARACTERS[p1Choice], false);
-        player2 = new Fighter(2, 600, 200, CHARACTERS[p2Choice], currentGameMode === 'bot');
+        // El rival (P2) se carga vacío y su posición exacta se actualizará por red segundo a segundo
+        player2 = new Fighter(2, 650, 200, CHARACTERS[p2Choice], currentGameMode === 'bot');
+
+        document.getElementById('name-p1').innerText = role === 'client' ? "P2" : "P1";
+        document.getElementById('name-p2').innerText = currentGameMode === 'bot' ? "BOT" : (role === 'client' ? "P1" : "P2");
+
         projectiles = []; particles = [];
         if(gameLoopId) cancelAnimationFrame(gameLoopId);
         gameLoopId = requestAnimationFrame(battleLoop);
@@ -474,73 +454,68 @@
     function battleLoop() {
         let map = MAPS[selectedMapIndex];
         
-        if (currentGameMode === 'bot' || role === 'host') {
-            player1.update(inputs); player2.update(player2.remoteInputs || {});
-            [player1, player2].forEach(p => {
-                p.grounded = false;
-                PLATFORMS.forEach(plat => {
-                    if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h >= plat.y && p.y + p.h - p.vy <= plat.y + 10 && p.vy >= 0) {
-                        p.y = plat.y - p.h; p.vy = 0; p.grounded = true;
-                    }
-                });
-            });
+        // El jugador local (P1) siempre calcula sus físicas de forma local inmediata
+        player1.update();
 
-            for (let i = projectiles.length - 1; i >= 0; i--) {
-                let pr = projectiles[i]; pr.x += pr.vx;
-                let target = pr.owner === 1 ? player2 : player1;
-                if (pr.x > target.x && pr.x < target.x + target.w && pr.y > target.y && pr.y < target.y + target.h) {
-                    target.hp -= 10; projectiles.splice(i, 1); screenShake = 6; playSound('hit');
-                    createHitParticles(target.x+15, target.y+20, pr.color);
-                    if(target.hp <= 0) { target.hp = 0; handleMatchEnd(pr.owner); } continue;
+        if (currentGameMode === 'bot') {
+            player2.update(); // Si es bot, ejecuta la IA localmente
+        }
+
+        // Colisión mutua con plataformas del mapa
+        [player1, player2].forEach(p => {
+            p.grounded = false;
+            PLATFORMS.forEach(plat => {
+                if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h >= plat.y && p.y + p.h - p.vy <= plat.y + 10 && p.vy >= 0) {
+                    p.y = plat.y - p.h; p.vy = 0; p.grounded = true;
                 }
-                if(pr.x < 0 || pr.x > canvas.width) projectiles.splice(i, 1);
+            });
+        });
+
+        // Simulación física y colisiones de flechas/magias
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let pr = projectiles[i]; pr.x += pr.vx;
+            let target = pr.owner === 1 ? player2 : player1;
+            if (pr.x > target.x && pr.x < target.x + target.w && pr.y > target.y && pr.y < target.y + target.h) {
+                if(pr.owner === 1) { // Solo restamos vida si el proyectil es nuestro para evitar desincronizaciones
+                    target.hp -= 10;
+                    if(target.hp <= 0) { target.hp = 0; handleMatchEnd(1); }
+                }
+                projectiles.splice(i, 1); playSound('hit'); continue;
             }
+            if(pr.x < 0 || pr.x > canvas.width) projectiles.splice(i, 1);
         }
 
-        // CONTROL DE SACUDIDA DE PANTALLA (SCREEN SHAKE) AL RECIBIR DAÑO
-        ctx.save();
-        if (screenShake > 0) {
-            let dx = (Math.random() - 0.5) * screenShake;
-            let dy = (Math.random() - 0.5) * screenShake;
-            ctx.translate(dx, dy); screenShake *= 0.85; if (screenShake < 0.5) screenShake = 0;
-        }
-
-        // DIBUJADO DEL MAPA CON RETRO PIXEL GRID
+        // RENDER DE GRÁFICOS RETRO PIXELADOS
         ctx.fillStyle = map.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = map.grid; ctx.lineWidth = 2;
+        ctx.strokeStyle = map.grid; ctx.lineWidth = 1;
         for (let i = 0; i < canvas.width; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
         for (let j = 0; j < canvas.height; j += 40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
-        // Plataformas PixelArt con reborde de Neon
         PLATFORMS.forEach(p => {
             ctx.fillStyle = map.groundColor; ctx.fillRect(p.x, p.y, p.w, p.h);
-            ctx.fillStyle = map.platColor; ctx.fillRect(p.x, p.y, p.w, 5); // Borde superior luminoso
+            ctx.fillStyle = map.platColor; ctx.fillRect(p.x, p.y, p.w, 4);
         });
 
-        // Dibujar Luchadores
-        if(player1 && player2) { player1.draw(); player2.draw(); }
+        player1.draw();
+        player2.draw();
 
-        // Dibujar Proyectiles Pixel
-        projectiles.forEach(p => { ctx.fillStyle = "#fff"; ctx.fillRect(p.x, p.y, 16, 6); });
+        projectiles.forEach(p => { ctx.fillStyle = "#fff"; ctx.fillRect(p.x, p.y, 14, 5); });
 
-        // Dibujar Partículas
         for (let i = particles.length - 1; i >= 0; i--) {
             let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.life--;
             ctx.fillStyle = pt.color; ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
             if (pt.life <= 0) particles.splice(i, 1);
         }
-        ctx.restore();
 
-        if(player1 && player2) {
-            document.getElementById('hp-p1').style.width = `${(player1.hp / player1.maxHp)*100}%`;
-            document.getElementById('hp-p2').style.width = `${(player2.hp / player2.maxHp)*100}%`;
-        }
+        document.getElementById('hp-p1').style.width = `${(player1.hp / player1.maxHp)*100}%`;
+        document.getElementById('hp-p2').style.width = `${(player2.hp / player2.maxHp)*100}%`;
+
         gameLoopId = requestAnimationFrame(battleLoop);
     }
 
     function endGameDisplay(winner) { 
         cancelAnimationFrame(gameLoopId); 
-        document.getElementById('victory-text').innerText = currentGameMode === 'bot' ? (winner === 1 ? "¡VICTORIA!" : "BOT GANÓ") : `¡GANADOR P${winner}!`; 
+        document.getElementById('victory-text').innerText = currentGameMode === 'bot' ? (winner === 1 ? "¡VICTORIA!" : "BOT GANÓ") : (winner === 1 ? "¡GANASTE!" : "PERDISTE"); 
         changeScreen('screen-over'); 
     }
 
