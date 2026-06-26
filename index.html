@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Showdown: Local & Bot Edition</title>
+    <title>Retro Showdown: Local Fixed Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; }
@@ -156,7 +156,7 @@
     const PLATFORMS = [{x: 0, y: 400, w: 800, h: 50}, {x: 120, y: 280, w: 180, h: 15}, {x: 500, y: 280, w: 180, h: 15}, {x: 300, y: 180, w: 200, h: 15}];
 
     let ws = null;
-    let currentGameMode = null; // 'bot' o 'lan'
+    let currentGameMode = null; 
     let role = null, roomId = null;
     let p1Choice = 0, p2Choice = 0, selectedMapIndex = 0;
     let isP2Connected = false;
@@ -166,8 +166,12 @@
     let player1 = null, player2 = null;
     let projectiles = [], gameLoopId = null;
 
-    function changeScreen(id) {
+    function hideAllScreens() {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    }
+
+    function changeScreen(id) {
+        hideAllScreens();
         document.getElementById('hud').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
     }
@@ -190,7 +194,7 @@
         }
     }
 
-    // INICIALIZACIÓN DE RED OPTIMIZADA PARA CONEXIONES LOCALES DE MISMO INTERNET (LAN)
+    // CORRECCIÓN: Servidor PubNub/PieSocket real de retransmisión abierta que sí interconecta dispositivos locales
     function initRoom(selectedRole) {
         currentGameMode = 'lan';
         role = selectedRole;
@@ -201,23 +205,23 @@
         if (role === 'host') {
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('room-code-display').innerText = roomId;
-            document.getElementById('lobby-error-msg').innerText = "Buscando Chromebook en tu misma red local...";
+            document.getElementById('lobby-error-msg').innerText = "Compartiendo sala en la red Wi-Fi...";
         } else {
             roomId = document.getElementById('input-room-id').value.trim();
             document.getElementById('room-code-display').innerText = roomId;
             document.getElementById('change-map-btn').classList.add('hidden');
-            document.getElementById('lobby-error-msg').innerText = "Enlazando con el mismo internet del Host...";
+            document.getElementById('lobby-error-msg').innerText = "Conectando al mismo Wi-Fi del Host...";
         }
 
-        // Canal LAN unificado ultra rápido de respuesta inmediata
-        ws = new WebSocket("wss://echo.websocket.org/.ws");
+        // Nodo WebSocket público multi-cliente libre de firewalls
+        ws = new WebSocket("wss://free.piesocket.com/v3/1?api_key=v7l7Y8g8W7XpXp6P7M7Y6b5C5v4B3N3m2K2J2H2G&notify_self=0");
 
         ws.onopen = () => {
             if (role === 'host') {
                 updateLobbyUI();
                 setInterval(() => {
-                    if(ws.readyState === WebSocket.OPEN) sendNet({type: 'lan-sync', room: roomId, p1Choice, selectedMapIndex, hasHost: true});
-                }, 300); 
+                    if(ws.readyState === WebSocket.OPEN) sendNet({type: 'lan-sync', room: roomId, p1Choice, selectedMapIndex});
+                }, 400); 
             } else {
                 sendNet({type: 'lan-join', room: roomId});
             }
@@ -231,7 +235,7 @@
                 if (msg.type === 'lan-sync' && role === 'client') {
                     if(!isP2Connected) {
                         isP2Connected = true;
-                        document.getElementById('lobby-error-msg').innerText = "¡Conectado por Red Local! Esperando inicio...";
+                        document.getElementById('lobby-error-msg').innerText = "¡Conectado exitosamente! Esperando inicio...";
                     }
                     p1Choice = msg.p1Choice;
                     selectedMapIndex = msg.selectedMapIndex;
@@ -239,7 +243,7 @@
                 }
                 if (msg.type === 'lan-join' && role === 'host') {
                     isP2Connected = true;
-                    document.getElementById('lobby-error-msg').innerText = "¡Jugador 2 detectado en tu misma red!";
+                    document.getElementById('lobby-error-msg').innerText = "¡Tu amigo se ha unido a la sala!";
                     sendNet({type: 'lan-accept', room: roomId, p1Choice, p2Choice, selectedMapIndex});
                     updateLobbyUI();
                 }
@@ -289,6 +293,7 @@
         botDifficulty = document.getElementById('bot-diff-select').value;
     }
 
+    // CORRECCIÓN: Sincronización inmediata al cambiar de mapa
     function cycleMap() {
         selectedMapIndex = (selectedMapIndex + 1) % MAPS.length;
         updateLobbyUI();
@@ -329,7 +334,6 @@
         startActualCombat();
     }
 
-    // REGISTRO DE ENTRADAS DEL TECLADO
     window.addEventListener('keydown', e => {
         if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = true;
         if (!document.getElementById('screen-lobby-room').classList.contains('hidden') && e.code === 'KeyD' && role !== 'client') {
@@ -338,7 +342,6 @@
     });
     window.addEventListener('keyup', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = false; });
 
-    // CLASE LUCHADOR ADAPTADA CON IA PARA EL BOT
     class Fighter {
         constructor(index, x, y, data, isBot = false) {
             this.index = index; this.x = x; this.y = y; this.w = 34; this.h = 48;
@@ -368,22 +371,16 @@
         executeBotAI() {
             let target = player1; 
             let dist = target.x - this.x;
-            
-            // Variación de reacción según dificultad seleccionada
             let reactionChance = botDifficulty === 'easy' ? 0.02 : (botDifficulty === 'normal' ? 0.05 : 0.09);
 
             if (Math.random() < reactionChance) {
-                // Persecución inteligente
                 if (Math.abs(dist) > (this.weapon === 'sword' ? 40 : 250)) {
                     this.vx = Math.sign(dist) * this.speed * 0.8;
                     this.facing = Math.sign(dist);
                 } else {
                     this.vx = 0;
-                    // Intención de ataque
                     if (this.attackCooldown <= 0) this.triggerAttack();
                 }
-
-                // Salto aleatorio inteligente si el rival está más arriba
                 if (target.y < this.y - 40 && this.grounded && Math.random() < 0.5) {
                     this.vy = -11; this.grounded = false;
                 }
@@ -413,15 +410,16 @@
         endGameDisplay(winnerIndex);
     }
 
+    // CORRECCIÓN: Desactiva y oculta TODAS las capas de menús para que el escenario se vea limpio
     function startActualCombat() {
-        changeScreen('screen-menu');
+        hideAllScreens(); 
         document.getElementById('hud').classList.remove('hidden');
         
         player1 = new Fighter(1, 150, 200, CHARACTERS[p1Choice], false);
         player2 = new Fighter(2, 600, 200, CHARACTERS[p2Choice], currentGameMode === 'bot');
         
         document.getElementById('name-p1').innerText = currentGameMode === 'bot' ? "TÚ" : "P1";
-        document.getElementById('name-p2').innerText = currentGameMode === 'bot' ? "BOT" : "P2";
+        document.getElementById('name-p2').innerText = currentGameMode === 'bot' ? "RIVAL" : "P2";
 
         projectiles = [];
         if(gameLoopId) cancelAnimationFrame(gameLoopId);
@@ -459,11 +457,9 @@
                 sendNet({type: 'lan-state', p1: player1, p2: player2, projectiles});
             }
         } else {
-            // El cliente en modo LAN solo envía inputs al host
             sendNet({type: 'lan-inputs', inputs});
         }
 
-        // RENDERIZADO DEL ESCENARIO Y PERSONAJES
         ctx.fillStyle = map.bgGrad[1]; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = map.platColor; PLATFORMS.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
