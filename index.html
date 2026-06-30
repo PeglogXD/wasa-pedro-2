@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Showdown: Real LAN Sync</title>
+    <title>Retro Showdown: Absolute Fix Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; user-select: none; image-rendering: pixelated; }
@@ -119,7 +119,7 @@
             </div>
 
             <div class="map-select-area">
-                <span>ESCENARIO: </span><span id="map-name-display" style="color:#ff2a6d;">Cargando...</span>
+                <span>ESCENARIO: </span><span id="map-name-display" style="color:#ff2a6d;">Castillo Neon</span>
                 <button class="btn" id="change-map-btn" onclick="cycleMap()" style="padding:5px 10px; font-size:8px; margin-left:10px;">Siguiente</button>
             </div>
 
@@ -201,56 +201,59 @@
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // EFICIENTE MOTOR DE RED REAL POR SERVIDOR DE PASO INSTITUCIONAL SIN BLOQUEOS
+    // INTERCONEXIÓN MEJORADA FILTRADA POR ID DE SALA OBLIGATORIO
     function initNetwork(selectedRole) {
         currentGameMode = 'lan'; role = selectedRole;
-        changeScreen('screen-lobby-room');
-        document.getElementById('lan-code-container').classList.remove('hidden');
-
+        
         if (role === 'host') {
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            changeScreen('screen-lobby-room');
+            document.getElementById('lan-code-container').classList.remove('hidden');
             document.getElementById('room-code-display').innerText = roomId;
             document.getElementById('lobby-error-msg').innerText = "Abriendo compuerta local... Espera a tu amigo.";
         } else {
             roomId = document.getElementById('input-room-id').value.trim();
+            if(!roomId) return alert("¡Introduce el código del Host primero!");
+            changeScreen('screen-lobby-room');
+            document.getElementById('lan-code-container').classList.remove('hidden');
             document.getElementById('room-code-display').innerText = roomId;
             document.getElementById('change-map-btn').classList.add('hidden');
-            document.getElementById('p1-change-btn').innerText = "Cambiar [D]";
-            document.getElementById('lobby-error-msg').innerText = "Conectando al mismo Internet...";
+            document.getElementById('lobby-error-msg').innerText = "Enlazando directamente con la sala del Host...";
         }
 
-        // Servidor WebSocket público de libre acceso educativo (Mapeo síncrono real)
+        // Conexión estable libre de bloqueos escolares corporativos
         ws = new WebSocket("wss://wss.javascript.info/chat");
 
         ws.onopen = () => {
             if (role === 'client') {
                 sendNet({type: 'join-request'});
             }
-            // Bucle constante de sincronización del Lobby
+            // Bucle persistente de sincronización del Lobby
             setInterval(() => {
                 if (ws.readyState === WebSocket.OPEN && !player1) {
                     if (role === 'host') sendNet({type: 'lobby-sync', p1Choice, selectedMapIndex, isP2Connected});
                     else sendNet({type: 'client-lobby-choice', choice: p1Choice});
                 }
-            }, 300);
+            }, 250);
         };
 
         ws.onmessage = (e) => {
             try {
                 let packet = JSON.parse(e.data);
+                // CORRECCIÓN CLAVE: Ignorar por completo paquetes de salas ajenas o de nosotros mismos
                 if (packet.room !== roomId || packet.sender === role) return;
 
                 if (packet.type === 'join-request' && role === 'host') {
                     isP2Connected = true;
-                    document.getElementById('lobby-error-msg').innerText = "¡Conectado con tu amigo! Seleccionen personaje.";
+                    document.getElementById('lobby-error-msg').innerText = "¡Tu amigo se ha conectado como P2!";
                     sendNet({type: 'lobby-sync', p1Choice, selectedMapIndex, isP2Connected: true});
                     updateLobbyUI();
                 }
                 if (packet.type === 'lobby-sync' && role === 'client') {
                     isP2Connected = packet.isP2Connected;
-                    p2Choice = packet.p1Choice; // El personaje del Host es el P2 del cliente
+                    p2Choice = packet.p1Choice; // El personaje del Host es el P2 visual del invitado
                     selectedMapIndex = packet.selectedMapIndex;
-                    document.getElementById('lobby-error-msg').innerText = "¡Enlazado con el Host! Esperando inicio...";
+                    document.getElementById('lobby-error-msg').innerText = "¡Sala enlazada con éxito! Esperando inicio...";
                     updateLobbyUI();
                 }
                 if (packet.type === 'client-lobby-choice' && role === 'host') {
@@ -262,15 +265,9 @@
                     selectedMapIndex = packet.mapIndex;
                     startActualCombat();
                 }
-                // TRANSMISIÓN EN TIEMPO REAL DE MOVIMIENTOS EN JUEGO
-                if (packet.type === 'game-update') {
-                    if (role === 'host' && player2) {
-                        player2.x = packet.x; player2.y = packet.y; player2.facing = packet.facing;
-                        player2.hp = packet.hp; player2.attackAnimFrame = packet.attackAnimFrame;
-                    } else if (role === 'client' && player2) {
-                        player2.x = packet.x; player2.y = packet.y; player2.facing = packet.facing;
-                        player2.hp = packet.hp; player2.attackAnimFrame = packet.attackAnimFrame;
-                    }
+                if (packet.type === 'game-update' && player2) {
+                    player2.x = packet.x; player2.y = packet.y; player2.facing = packet.facing;
+                    player2.hp = packet.hp; player2.attackAnimFrame = packet.attackAnimFrame;
                 }
                 if (packet.type === 'spawn-projectile' && player2) {
                     projectiles.push({x: packet.x, y: packet.y, vx: packet.vx, owner: 2, color: player2.color});
@@ -294,21 +291,33 @@
     }
 
     function updateBotDifficulty() { botDifficulty = document.getElementById('bot-diff-select').value; }
-    function cycleMap() { selectedMapIndex = (selectedMapIndex + 1) % MAPS.length; updateLobbyUI(); }
+    
+    function cycleMap() { 
+        if(role === 'client') return;
+        selectedMapIndex = (selectedMapIndex + 1) % MAPS.length; 
+        updateLobbyUI(); 
+    }
 
     function updateLobbyUI() {
+        // Fijar textos locales de P1
         document.getElementById('name-preview-p1').innerText = CHARACTERS[p1Choice].name;
         document.getElementById('name-preview-p1').style.color = CHARACTERS[p1Choice].color;
         document.getElementById('desc-preview-p1').innerText = CHARACTERS[p1Choice].desc;
 
+        // CORRECCIÓN: Colocar al amigo en el P2 de forma estricta
         if (isP2Connected) {
             document.getElementById('slot-p2').classList.add('connected');
             document.getElementById('title-p2').innerText = currentGameMode === 'bot' ? "🤖 BOT" : "🕹️ TU AMIGO (P2)";
             document.getElementById('name-preview-p2').innerText = CHARACTERS[p2Choice].name;
             document.getElementById('name-preview-p2').style.color = CHARACTERS[p2Choice].color;
             document.getElementById('desc-preview-p2').innerText = CHARACTERS[p2Choice].desc;
-            document.getElementById('start-match-btn').removeAttribute('disabled');
+            
+            if(role === 'host' || currentGameMode === 'bot') {
+                document.getElementById('start-match-btn').removeAttribute('disabled');
+            }
         }
+        
+        // El mapa ahora se fuerza a renderizar su nombre guardado de forma inmediata
         document.getElementById('map-name-display').innerText = MAPS[selectedMapIndex].name;
     }
 
@@ -322,7 +331,6 @@
     window.addEventListener('keydown', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = true; });
     window.addEventListener('keyup', e => { if (['KeyA','KeyD','KeyW','KeyF'].includes(e.code)) inputs[e.code] = false; });
 
-    // CLASE FIGHTER DETALLADA CON GRÁFICOS PIXELART PROCEDIMENTALES
     class Fighter {
         constructor(index, x, y, data, isBot = false) {
             this.index = index; this.x = x; this.y = y; this.w = 36; this.h = 52;
@@ -349,7 +357,6 @@
             if(this.attackCooldown > 0) { this.attackCooldown--; this.attackAnimFrame++; } else { this.attackAnimFrame = 0; }
             if (this.x < 0) this.x = 0; if (this.x + this.w > canvas.width) this.x = canvas.width - this.w;
 
-            // Enviar datos de posición reales a través de la red de inmediato
             if (currentGameMode === 'lan' && this.index === 1) {
                 sendNet({type: 'game-update', x: this.x, y: this.y, facing: this.facing, hp: this.hp, attackAnimFrame: this.attackAnimFrame});
             }
@@ -372,7 +379,7 @@
             this.attackCooldown = 25;
             if (this.weapon === 'sword') {
                 playSound('hit');
-                let target = player2; // En local atacamos al rival cargado en el slot 2
+                let target = player2; 
                 let rangeBox = { x: this.facing === 1 ? this.x + this.w : this.x - 55, y: this.y, w: 55, h: this.h };
                 if (rangeBox.x < target.x + target.w && rangeBox.x + rangeBox.w > target.x && rangeBox.y < target.y + target.h && rangeBox.y + rangeBox.h > target.y) {
                     target.hp -= 15; createHitParticles(target.x+15, target.y+20, this.color);
@@ -395,25 +402,19 @@
             if (this.facing === -1) ctx.scale(-1, 1);
 
             let bob = Math.sin(this.animTimer) * 3;
-            // Cabeza PixelArt
             ctx.fillStyle = "#e0a060"; ctx.fillRect(-12, -24 + bob, 24, 16);
-            ctx.fillStyle = this.color; ctx.fillRect(-12, -26 + bob, 24, 6); // Casco protector
-            ctx.fillStyle = "#000"; ctx.fillRect(4, -18 + bob, 4, 4); // Ojo delantero
+            ctx.fillStyle = this.color; ctx.fillRect(-12, -26 + bob, 24, 6); 
+            ctx.fillStyle = "#000"; ctx.fillRect(4, -18 + bob, 4, 4); 
 
-            // Armadura Pecho
             ctx.fillStyle = this.color; ctx.fillRect(-14, -8 + bob, 28, 22);
+            ctx.fillStyle = "#111"; ctx.fillRect(-10, 14, 8, 12); ctx.fillRect(2, 14, 8, 12);
 
-            // Piernas
-            ctx.fillStyle = "#111";
-            ctx.fillRect(-10, 14, 8, 12); ctx.fillRect(2, 14, 8, 12);
-
-            // Renderización de arma y cuadros de animación de golpe
             ctx.fillStyle = "#ffffff";
             if (this.weapon === 'sword') {
                 if (this.attackAnimFrame > 0 && this.attackAnimFrame < 12) {
-                    ctx.rotate(1.3); ctx.fillRect(4, -36, 8, 38); // Arco de corte frontal
+                    ctx.rotate(1.3); ctx.fillRect(4, -36, 8, 38); 
                 } else {
-                    ctx.fillRect(8, -22 + bob, 6, 24); // Guardia pasiva
+                    ctx.fillRect(8, -22 + bob, 6, 24); 
                 }
             } else if (this.weapon === 'bow') {
                 ctx.fillStyle = "#f5b041"; ctx.fillRect(10, -14 + bob, 4, 28);
@@ -440,7 +441,6 @@
         document.getElementById('hud').classList.remove('hidden');
 
         player1 = new Fighter(1, 150, 200, CHARACTERS[p1Choice], false);
-        // El rival (P2) se carga vacío y su posición exacta se actualizará por red segundo a segundo
         player2 = new Fighter(2, 650, 200, CHARACTERS[p2Choice], currentGameMode === 'bot');
 
         document.getElementById('name-p1').innerText = role === 'client' ? "P2" : "P1";
@@ -453,15 +453,10 @@
 
     function battleLoop() {
         let map = MAPS[selectedMapIndex];
-        
-        // El jugador local (P1) siempre calcula sus físicas de forma local inmediata
         player1.update();
 
-        if (currentGameMode === 'bot') {
-            player2.update(); // Si es bot, ejecuta la IA localmente
-        }
+        if (currentGameMode === 'bot') player2.update();
 
-        // Colisión mutua con plataformas del mapa
         [player1, player2].forEach(p => {
             p.grounded = false;
             PLATFORMS.forEach(plat => {
@@ -471,12 +466,11 @@
             });
         });
 
-        // Simulación física y colisiones de flechas/magias
         for (let i = projectiles.length - 1; i >= 0; i--) {
             let pr = projectiles[i]; pr.x += pr.vx;
             let target = pr.owner === 1 ? player2 : player1;
             if (pr.x > target.x && pr.x < target.x + target.w && pr.y > target.y && pr.y < target.y + target.h) {
-                if(pr.owner === 1) { // Solo restamos vida si el proyectil es nuestro para evitar desincronizaciones
+                if(pr.owner === 1) { 
                     target.hp -= 10;
                     if(target.hp <= 0) { target.hp = 0; handleMatchEnd(1); }
                 }
@@ -485,7 +479,6 @@
             if(pr.x < 0 || pr.x > canvas.width) projectiles.splice(i, 1);
         }
 
-        // RENDER DE GRÁFICOS RETRO PIXELADOS
         ctx.fillStyle = map.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = map.grid; ctx.lineWidth = 1;
         for (let i = 0; i < canvas.width; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
